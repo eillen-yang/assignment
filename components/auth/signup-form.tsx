@@ -25,7 +25,7 @@ export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    username: "",
     password: "",
     confirmPassword: "",
   });
@@ -94,9 +94,9 @@ export function SignupForm() {
               id="email"
               type="email"
               placeholder="name@example.com"
-              value={formData.email}
+              value={formData.username}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, username: e.target.value })
               }
               className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               required

@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({
     username: "", // 아이디 필드 추가
     name: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -62,7 +63,7 @@ export default function SignupPage() {
               새 계정을 만들어 게시판을 이용하세요
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">아이디</Label>
@@ -87,6 +88,20 @@ export default function SignupPage() {
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
+                  }
+                  required
+                  className="bg-input border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">이메일</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
                   }
                   required
                   className="bg-input border-border"

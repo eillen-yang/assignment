@@ -23,7 +23,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
@@ -63,9 +63,9 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="name@example.com"
-              value={formData.email}
+              value={formData.username}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, username: e.target.value })
               }
               className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               required

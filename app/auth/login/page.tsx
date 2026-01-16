@@ -39,9 +39,8 @@ export default function LoginPage() {
 
     login({
       id: "1",
-      username: formData.username,
+      username: `${formData.username}@example.com`,
       name: formData.username, // 실제 API에서 받아올 이름
-      email: `${formData.username}@example.com`,
     });
 
     setIsLoading(false);
