@@ -1,35 +1,69 @@
-// lib/auth-fetch.ts
-import { useAuthStore } from "./auth-store";
+import { useAuthStore } from "@/store/auth-store";
 import { refreshAccessToken } from "./auth-refresh";
 
-export async function authFetch(input: RequestInfo, init: RequestInit = {}) {
-  const { accessToken, logout } = useAuthStore.getState();
+let isRefreshing = false;
+let refreshQueue: ((token: string) => void)[] = [];
 
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      ...init.headers,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+export async function authFetch(
+  input: RequestInfo,
+  init?: RequestInit
+): Promise<Response> {
+  const store = useAuthStore.getState();
 
-  // accessToken 만료
-  if (res.status === 401) {
-    try {
-      const newToken = await refreshAccessToken();
-
-      return fetch(input, {
-        ...init,
-        headers: {
-          ...init.headers,
-          Authorization: `Bearer ${newToken}`,
-        },
+  // ✅ hydration 완료 대기
+  if (!store.hasHydrated) {
+    await new Promise((resolve) => {
+      const unsub = useAuthStore.subscribe((state) => {
+        if (state.hasHydrated) {
+          unsub();
+          resolve(true);
+        }
       });
-    } catch {
-      logout();
-      throw new Error("인증 만료");
-    }
+    });
   }
 
-  return res;
+  let accessToken = store.accessToken;
+
+  const doFetch = (token?: string) =>
+    fetch(input, {
+      ...init,
+      headers: {
+        ...(init?.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+  // 🔹 토큰 없어도 요청은 보냄 (public API 허용)
+  let response = await doFetch(accessToken ?? undefined);
+
+  // ✅ refresh는 401만 처리
+  if (response.status !== 401) {
+    return response;
+  }
+
+  // 🔁 이미 refresh 중이면 큐에 대기
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      refreshQueue.push((newToken) => {
+        doFetch(newToken).then(resolve).catch(reject);
+      });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const newAccessToken = await refreshAccessToken();
+
+    refreshQueue.forEach((cb) => cb(newAccessToken));
+    refreshQueue = [];
+
+    return doFetch(newAccessToken);
+  } catch (e) {
+    refreshQueue = [];
+    store.logout();
+    throw e;
+  } finally {
+    isRefreshing = false;
+  }
 }
