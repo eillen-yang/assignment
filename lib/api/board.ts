@@ -107,8 +107,8 @@ export async function createPost(
 export async function updatePost(
   id: number,
   data: PostCreateRequest,
-  token: string
-): Promise<Post> {
+  file?: File
+): Promise<void> {
   const formData = new FormData();
 
   formData.append(
@@ -116,16 +116,19 @@ export async function updatePost(
     new Blob([JSON.stringify(data)], { type: "application/json" })
   );
 
-  const res = await fetch(`${API_BASE_URL}/boards/${id}`, {
+  if (file) formData.append("file", file);
+
+  const res = await authFetch(`${API_BASE_URL}/boards/${id}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: formData,
   });
-  if (!res.ok) throw new Error("게시글 수정에 실패했습니다.");
-  return res.json();
+
+  // authFetch 내부에서 401/403 + refresh 처리됨
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "게시글 수정 실패");
+  }
 }
 
 // 게시글 삭제
