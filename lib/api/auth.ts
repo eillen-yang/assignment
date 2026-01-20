@@ -45,7 +45,7 @@ export async function signupApi(data: SignupRequest) {
   const result = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
-    throw new Error(result?.message || "회원가입에 실패했습니다.");
+    throw result;
   }
 
   return result;

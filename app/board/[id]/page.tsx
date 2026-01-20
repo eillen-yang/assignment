@@ -137,9 +137,9 @@ export default function PostDetailPage() {
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className={getCategoryColor(post.category)}
+                      className={getCategoryColor(post.boardCategory)}
                     >
-                      {CATEGORIES[post.category] || post.category}
+                      {CATEGORIES[post.boardCategory] || post.boardCategory}
                     </Badge>
                   </div>
                   <h2 className="text-xl font-semibold text-foreground">

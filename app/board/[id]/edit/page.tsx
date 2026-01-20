@@ -1,9 +1,10 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,88 +18,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getPost,
-  updatePost,
-  CATEGORIES,
-  type CategoryKey,
-} from "@/lib/api/board";
+
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
-import { useAuthStore } from "@/store/auth-store";
+import { CategoryKey, getPost, updatePost } from "@/lib/api/board";
+
+const TITLE_MIN = 5;
+const TITLE_MAX = 50;
+const CONTENT_MIN = 20;
+const CONTENT_MAX = 250;
 
 export default function EditPage() {
   const router = useRouter();
   const params = useParams();
-  const { accessToken: token } = useAuthStore();
+  const postId = Number(params.id);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    category: "" as CategoryKey | "",
+    boardCategory: "",
   });
 
-  const postId = Number(params.id);
-
   useEffect(() => {
+    if (!postId || Number.isNaN(postId)) {
+      setError("잘못된 접근입니다.");
+      setIsFetching(false);
+      return;
+    }
+
     const fetchPost = async () => {
-      setIsFetching(true);
-      setError(null);
       try {
-        const post = await getPost(postId);
+        const data = await getPost(postId);
         setFormData({
-          title: post.title,
-          content: post.content,
-          category: post.category,
+          title: data.title,
+          content: data.content,
+          boardCategory: data.boardCategory,
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+        console.error(err);
+        setError("게시글을 불러오지 못했습니다.");
       } finally {
         setIsFetching(false);
       }
     };
-    if (postId) fetchPost();
+
+    fetchPost();
   }, [postId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isTitleValid =
+    formData.title.length >= TITLE_MIN && formData.title.length <= TITLE_MAX;
 
-    if (!formData.title || !formData.content || !formData.category) {
-      alert("모든 필드를 입력해주세요.");
-      return;
-    }
+  const isContentValid =
+    formData.content.length >= CONTENT_MIN &&
+    formData.content.length <= CONTENT_MAX;
 
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      router.push("/auth/login");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await updatePost(
-        postId,
-        {
-          title: formData.title,
-          content: formData.content,
-          category: formData.category as CategoryKey,
-        },
-        token
-      );
-      router.push(`/board/${postId}`);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "게시글 수정에 실패했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isFormValid = useMemo(() => {
+    return isTitleValid && isContentValid && Boolean(formData.boardCategory);
+  }, [isTitleValid, isContentValid, formData.boardCategory]);
 
   if (isFetching) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       </DashboardLayout>
     );
@@ -108,10 +93,7 @@ export default function EditPage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-12">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            게시글을 찾을 수 없습니다
-          </h1>
-          <p className="text-muted-foreground mb-4">{error}</p>
+          <h1 className="text-xl font-bold mb-2">{error}</h1>
           <Button asChild>
             <Link href="/board">목록으로 돌아가기</Link>
           </Button>
@@ -120,84 +102,130 @@ export default function EditPage() {
     );
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isFormValid) {
+      alert("입력 조건을 다시 확인해주세요.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      await updatePost(postId, {
+        title: formData.title,
+        content: formData.content,
+        category: formData.boardCategory as CategoryKey,
+      });
+
+      router.push(`/board/${postId}`);
+    } catch (err) {
+      console.error(err);
+      alert("게시글 수정에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* 헤더 */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href={`/board/${postId}`}>
               <ArrowLeft className="h-5 w-5" />
-              <span className="sr-only">뒤로가기</span>
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">글 수정</h1>
+            <h1 className="text-2xl font-bold">글 수정</h1>
             <p className="text-muted-foreground">게시글을 수정합니다</p>
           </div>
         </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="border-b border-border">
-            <CardTitle className="text-lg">게시글 수정</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle>게시글 수정</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
+                {/* 제목 */}
                 <div className="space-y-2">
-                  <Label htmlFor="title">제목</Label>
+                  <Label>제목</Label>
                   <Input
-                    id="title"
-                    placeholder="게시글 제목을 입력하세요"
                     value={formData.title}
+                    maxLength={TITLE_MAX}
                     onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="bg-input border-border"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">카테고리</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        category: value as CategoryKey,
+                        title: e.target.value.slice(0, TITLE_MAX),
                       })
                     }
+                  />
+                  <p
+                    className={`text-sm text-right ${
+                      isTitleValid ? "text-muted-foreground" : "text-red-500"
+                    }`}
                   >
-                    <SelectTrigger className="bg-input border-border">
+                    {formData.title.length} / {TITLE_MAX}
+                    {!isTitleValid && ` (최소 ${TITLE_MIN}자)`}
+                  </p>
+                </div>
+
+                {/* 카테고리 */}
+                <div className="space-y-2">
+                  <Label>카테고리</Label>
+                  <Select
+                    value={formData.boardCategory}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, boardCategory: value })
+                    }
+                  >
+                    <SelectTrigger>
                       <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(CATEGORIES).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="NOTICE">공지</SelectItem>
+                      <SelectItem value="FREE">자유</SelectItem>
+                      <SelectItem value="QNA">Q&A</SelectItem>
+                      <SelectItem value="ETC">기타</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
+              {/* 내용 */}
               <div className="space-y-2">
-                <Label htmlFor="content">내용</Label>
+                <Label>내용</Label>
                 <Textarea
-                  id="content"
-                  placeholder="게시글 내용을 입력하세요"
                   value={formData.content}
+                  maxLength={CONTENT_MAX}
                   onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
+                    setFormData({
+                      ...formData,
+                      content: e.target.value.slice(0, CONTENT_MAX),
+                    })
                   }
-                  className="min-h-75 bg-input border-border resize-none"
+                  className="min-h-72 resize-none"
                 />
+                <p
+                  className={`text-sm text-right ${
+                    isContentValid ? "text-muted-foreground" : "text-red-500"
+                  }`}
+                >
+                  {formData.content.length} / {CONTENT_MAX}
+                  {!isContentValid && ` (최소 ${CONTENT_MIN}자)`}
+                </p>
               </div>
 
+              {/* 버튼 */}
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" asChild>
+                <Button variant="outline" asChild>
                   <Link href={`/board/${postId}`}>취소</Link>
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={!isFormValid || isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Button } from "@/components/ui/button";
@@ -28,15 +28,11 @@ function BoardContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("hydrated:", hasHydrated);
-
     if (!hasHydrated) return;
 
     const fetchPosts = async () => {
       setIsLoading(true);
       setError(null);
-
-      console.log("acc", accessToken);
 
       if (!accessToken) {
         setError("로그인이 필요합니다.");
@@ -138,13 +134,11 @@ function BoardContent() {
           )}
         </div>
 
-        {totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </DashboardLayout>
   );

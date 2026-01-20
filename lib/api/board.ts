@@ -1,7 +1,6 @@
-import { useAuthStore } from "@/store/auth-store";
 import { toast } from "react-hot-toast";
-import { refreshAccessToken } from "../auth-refresh";
 import { authFetch } from "../auth-fetch";
+import { handleTokenExpired } from "../handle-auth-error";
 
 // 게시판 API 서비스
 const API_BASE_URL = "https://front-mission.bigs.or.kr";
@@ -22,6 +21,7 @@ export interface Post {
   title: string;
   content: string;
   category: CategoryKey;
+  boardCategory: CategoryKey;
   createdAt: string;
   boardId?: number;
   imageUrl?: string;
@@ -90,9 +90,7 @@ export async function createPost(
   });
 
   if (res.status === 401) {
-    toast.error("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-    // router.push("/auth/login");
-    throw new Error("토큰 만료");
+    handleTokenExpired();
   }
 
   if (!res.ok) {
@@ -128,6 +126,10 @@ export async function updatePost(
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "게시글 수정 실패");
+  }
+
+  if (res.status === 401) {
+    handleTokenExpired();
   }
 }
 
