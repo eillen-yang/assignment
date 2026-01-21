@@ -122,7 +122,7 @@ export function SignupForm({
               className="absolute right-0 top-0 h-full"
               onClick={() => setShowPassword((prev) => !prev)}
             >
-              {showPassword ? <EyeOff /> : <Eye />}
+              {showPassword ? <Eye /> : <EyeOff />}
             </Button>
           </div>
 
@@ -170,7 +170,7 @@ export function SignupForm({
               className="absolute right-0 top-0 h-full"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
             >
-              {showConfirmPassword ? <EyeOff /> : <Eye />}
+              {showConfirmPassword ? <Eye /> : <EyeOff />}
             </Button>
           </div>
 

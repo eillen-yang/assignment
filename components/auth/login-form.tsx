@@ -73,7 +73,7 @@ export function LoginForm({ isLoading, onSubmit }: LoginFormProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? <Eye /> : <EyeOff />}
               </button>
             </div>
           </div>

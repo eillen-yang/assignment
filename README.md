@@ -16,6 +16,12 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+```
+.env.local 파일 생성 후,
+NEXT_PUBLIC_API_URL 변수에 api url주소를 작성해주세요
+그래야 게시글의 이미지를 사용할 수 있습니다.
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

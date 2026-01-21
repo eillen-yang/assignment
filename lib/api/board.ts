@@ -41,6 +41,10 @@ export interface PostCreateRequest {
   category: CategoryKey;
 }
 
+export interface PostUpdateRequest extends PostCreateRequest {
+  removeImage?: boolean;
+}
+
 // 게시글 목록 조회
 export async function getPosts(page = 0, size = 10): Promise<PostListResponse> {
   const res = await authFetch(
@@ -56,7 +60,6 @@ export async function getPosts(page = 0, size = 10): Promise<PostListResponse> {
 
 // 게시글 상세 조회
 export async function getPost(id: number): Promise<Post> {
-  console.log("id", `${API_BASE_URL}/boards/${id}`);
   const res = await authFetch(`${API_BASE_URL}/boards/${id}`);
 
   if (!res.ok) {
@@ -104,7 +107,7 @@ export async function createPost(
 // 게시글 수정
 export async function updatePost(
   id: number,
-  data: PostCreateRequest,
+  data: PostUpdateRequest,
   file?: File
 ): Promise<void> {
   const formData = new FormData();

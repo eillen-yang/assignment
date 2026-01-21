@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 import {
   getPost,
   deletePost,
@@ -25,6 +27,7 @@ import {
   type Post,
   type CategoryKey,
 } from "@/lib/api/board";
+
 import { ArrowLeft, Edit, Trash2, Calendar, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -32,12 +35,16 @@ export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { accessToken: token } = useAuthStore();
+
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const postId = Number(params.id);
+  const imageSrc = post?.imageUrl?.startsWith("http")
+    ? post.imageUrl
+    : `${process.env.NEXT_PUBLIC_API_URL}${post?.imageUrl}`;
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -52,6 +59,7 @@ export default function PostDetailPage() {
         setIsLoading(false);
       }
     };
+
     if (postId) fetchPost();
   }, [postId]);
 
@@ -60,6 +68,7 @@ export default function PostDetailPage() {
       alert("로그인이 필요합니다.");
       return;
     }
+
     setIsDeleting(true);
     try {
       await deletePost(postId, token);
@@ -100,9 +109,7 @@ export default function PostDetailPage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-12">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            게시글을 찾을 수 없습니다
-          </h1>
+          <h1 className="text-2xl font-bold mb-2">게시글을 찾을 수 없습니다</h1>
           <p className="text-muted-foreground mb-4">
             {error || "요청하신 게시글이 존재하지 않습니다."}
           </p>
@@ -117,35 +124,30 @@ export default function PostDetailPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* 헤더 */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/board">
               <ArrowLeft className="h-5 w-5" />
-              <span className="sr-only">뒤로가기</span>
             </Link>
           </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">게시글 상세</h1>
-          </div>
+          <h1 className="text-2xl font-bold">게시글 상세</h1>
         </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="border-b border-border">
+        <Card>
+          <CardHeader className="border-b">
             <div className="flex flex-col gap-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={getCategoryColor(post.boardCategory)}
-                    >
-                      {CATEGORIES[post.boardCategory] || post.boardCategory}
-                    </Badge>
-                  </div>
-                  <h2 className="text-xl font-semibold text-foreground">
-                    {post.title}
-                  </h2>
+              <div className="flex justify-between gap-4">
+                <div className="space-y-2">
+                  <Badge
+                    variant="outline"
+                    className={getCategoryColor(post.boardCategory)}
+                  >
+                    {CATEGORIES[post.boardCategory]}
+                  </Badge>
+                  <h2 className="text-xl font-semibold">{post.title}</h2>
                 </div>
+
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/board/${post.id}/edit`}>
@@ -153,6 +155,7 @@ export default function PostDetailPage() {
                       수정
                     </Link>
                   </Button>
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm">
@@ -164,8 +167,7 @@ export default function PostDetailPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>게시글 삭제</AlertDialogTitle>
                         <AlertDialogDescription>
-                          이 게시글을 정말 삭제하시겠습니까? 삭제된 게시글은
-                          복구할 수 없습니다.
+                          이 게시글을 정말 삭제하시겠습니까?
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -188,20 +190,29 @@ export default function PostDetailPage() {
                   </AlertDialog>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  {new Date(post.createdAt).toLocaleDateString("ko-KR")}
-                </span>
+
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {new Date(post.createdAt).toLocaleDateString("ko-KR")}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="prose prose-invert max-w-none">
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                {post.content}
-              </p>
-            </div>
+
+          <CardContent className="space-y-6 p-6">
+            {post.imageUrl && (
+              <div className="flex justify-center">
+                <img
+                  src={imageSrc}
+                  alt="게시글 이미지"
+                  className="max-h-100 w-auto rounded border object-contain"
+                />
+              </div>
+            )}
+
+            {/* 내용 */}
+            <p className="whitespace-pre-wrap leading-relaxed">
+              {post.content}
+            </p>
           </CardContent>
         </Card>
 

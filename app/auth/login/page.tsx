@@ -73,7 +73,7 @@ export default function LoginPage() {
       />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">게시판</h1>
           <p className="text-muted-foreground mt-2">게시판 관리 시스템</p>
         </div>
 
